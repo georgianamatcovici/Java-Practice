@@ -1,27 +1,27 @@
 package org.example;
 
 import com.github.javafaker.Faker;
-import org.jgrapht.Graph;
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleDirectedGraph;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.TreeSet;
+
+import java.sql.Array;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Main {
+
     public static void main(String[] args) {
         Problem myProblem=new Problem();
-        Location[] myLocations = new Location[6];
         Faker myFaker = new Faker();
-        myLocations[0] = new Location(1, myFaker.address().fullAddress(), LocationType.FRIENDLY);
-        myLocations[1] = new Location(2, myFaker.address().fullAddress(), LocationType.ENEMY);
-        myLocations[2] = new Location(3, myFaker.address().fullAddress(), LocationType.FRIENDLY);
-        myLocations[3] = new Location(4, myFaker.address().fullAddress(), LocationType.NEUTRAL);
-        myLocations[4] = new Location(5, myFaker.address().fullAddress(), LocationType.FRIENDLY);
-        myLocations[5] = new Location(6, myFaker.address().fullAddress(), LocationType.ENEMY);
+        var myLocations= IntStream.rangeClosed(0, 6)
+                .mapToObj(i->new Location(i+1, myFaker.address().fullAddress()))
+                .toArray(Location[]::new);
+        myLocations[0].setLocationType(LocationType.FRIENDLY);
+        myLocations[1].setLocationType(LocationType.ENEMY);
+        myLocations[2].setLocationType(LocationType.FRIENDLY);
+        myLocations[3].setLocationType(LocationType.NEUTRAL);
+        myLocations[4].setLocationType(LocationType.FRIENDLY);
+        myLocations[5].setLocationType(LocationType.ENEMY);
 
 
         TreeSet<Location> myFriendlyLocations= Arrays.stream(myLocations)
@@ -43,10 +43,19 @@ public class Main {
                 .filter(myElem->myElem!=null && myElem.getLocationType()==LocationType.NEUTRAL)
                 .collect(Collectors.toCollection(LinkedList::new));
 
+        System.out.println("Friend locations: ");
+        myFriendlyLocations.stream()
+                        .forEach(myLoc->System.out.println(myLoc.getLocationId()+" "+myLoc.getLocationName()));
+        System.out.println();
 
-        for(Location myLoc : myLocations) {
-            if(myLoc!=null) myProblem.addLocation(myLoc);
-        }
+        System.out.println("Enemy locations: ");
+        myEnemyLocations.stream()
+                .forEach(myLoc->System.out.println(myLoc.getLocationId()+" "+myLoc.getLocationName()));
+
+
+//        ArrayList<Location> locationList=new ArrayList<>(Arrays.asList(myLocations));
+        Arrays.stream(myLocations).forEach(myLoc->{if(myLoc!=null) myProblem.addLocation(myLoc);});
+
 
         myProblem.addRoute(myLocations[0], myLocations[1], new Route(7, 0.6));
         myProblem.addRoute(myLocations[0], myLocations[2], new Route(9, 0.5));
@@ -59,33 +68,46 @@ public class Main {
         myProblem.addRoute(myLocations[4], myLocations[5], new Route(9, 0.23));
         myProblem.setStartLocation(myLocations[0]);
 
-        System.out.println("Friend locations: ");
-        for(Location myLoc : myFriendlyLocations) {
-            System.out.println(myLoc.getLocationId()+". "+myLoc.getLocationName());
-        }
-        System.out.println();
-        System.out.println("Enemy locations: ");
-        for(Location myLoc : myEnemyLocations) {
-            System.out.println(myLoc.getLocationId()+". "+myLoc.getLocationName());
-        }
+
         System.out.println();
         myProblem.printRoutes();
         System.out.println();
 
+
+        Map<LocationType, List<Location>> locationMap =
+                Arrays.stream(myLocations)
+                        .filter(myElem->myElem.getLocationType()!=null)
+                        .collect(
+                        Collectors.groupingBy(Location::getLocationType)
+                );
+
         System.out.println("Friend locations: ");
-        for(Location myLoc : myFriendlyLocations) {
-            myProblem.solveDijkstra(myLoc);
-        }
+        locationMap.entrySet()
+                .stream()
+                .filter(myElem->myElem.getKey()==LocationType.FRIENDLY)
+                        .forEach(myElem->{
+                            List<Location> friendlyLocations=myElem.getValue();
+                            friendlyLocations.stream().forEach(myProblem::solveDijkstra);
+                        });
 
         System.out.println("Neutral locations: ");
-        for(Location myLoc : myNeutralLocations) {
-            myProblem.solveDijkstra(myLoc);
-        }
+        locationMap.entrySet()
+                .stream()
+                .filter(myElem->myElem.getKey()==LocationType.NEUTRAL)
+                .forEach(myElem->{
+                    List<Location> friendlyLocations=myElem.getValue();
+                    friendlyLocations.stream().forEach(myProblem::solveDijkstra);
+                });
 
         System.out.println("Enemy locations: ");
-        for(Location myLoc : myEnemyLocations) {
-            myProblem.solveDijkstra(myLoc);
-        }
+        locationMap.entrySet()
+                .stream()
+                .filter(myElem->myElem.getKey()==LocationType.ENEMY)
+                .forEach(myElem->{
+                    List<Location> friendlyLocations=myElem.getValue();
+                    friendlyLocations.stream().forEach(myProblem::solveDijkstra);
+                });
+
         myProblem.modifyCosts();
         System.out.println();
         myProblem.solveFloydWarshall();

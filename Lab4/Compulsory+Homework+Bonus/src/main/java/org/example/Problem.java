@@ -9,13 +9,15 @@ import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.alg.shortestpath.FloydWarshallShortestPaths;
 import org.jgrapht.graph.SimpleDirectedWeightedGraph;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Getter
 @Setter
 public class Problem {
     private Location startLocation;
-
+    private List<SafestRoute> safestRoutes=new ArrayList<>();
     Graph<Location, Route> graphMap=new SimpleDirectedWeightedGraph<Location, Route>(Route.class);
     public Problem() {
     }
@@ -29,11 +31,14 @@ public class Problem {
     }
 
     public void printRoutes() {
-        for (Route route : graphMap.edgeSet()) {
-            Location firstLocation = graphMap.getEdgeSource(route);
-            Location endLocation = graphMap.getEdgeTarget(route);
-            System.out.println(firstLocation.getLocationId() + " -> " + endLocation.getLocationId() + " Time: " + route.getTimeNeeded() + " Probability: " + route.getSafetyProbability());
-        }
+//        for (Route route : graphMap.edgeSet()) {
+//            Location firstLocation = graphMap.getEdgeSource(route);
+//            Location endLocation = graphMap.getEdgeTarget(route);
+//            System.out.println(firstLocation.getLocationId() + " -> " + endLocation.getLocationId() + " Time: " + route.getTimeNeeded() + " Probability: " + route.getSafetyProbability());
+//        }
+        graphMap.edgeSet().stream().forEach(myRoute -> {
+            System.out.println(graphMap.getEdgeSource(myRoute).getLocationId()+ " -> "+graphMap.getEdgeTarget(myRoute).getLocationId()+ " Time: "+myRoute.getTimeNeeded());
+        });
     }
 
     public void solveDijkstra(Location currentLocation)
@@ -55,12 +60,14 @@ public class Problem {
 
     public void modifyCosts()
     {
-        for(Route route : graphMap.edgeSet())
-        {
-            double safetyProbability=route.getSafetyProbability();
+        graphMap.edgeSet().stream()
+                .forEach(myRoute->{ double safetyProbability=myRoute.getSafetyProbability();
             double logProb=-Math.log10(safetyProbability);
-            graphMap.setEdgeWeight(route, logProb);
-        }
+            graphMap.setEdgeWeight(myRoute, logProb);});
+    }
+    public void addSafestRoute(SafestRoute newRoute)
+    {
+        safestRoutes.add(newRoute);
     }
 
     public void solveFloydWarshall()
@@ -72,6 +79,7 @@ public class Problem {
             GraphPath<Location, Route> safestRoute = floydWarshall.getPath(firstLocation, secondLocation);
             if(safestRoute!=null){
             System.out.println("Safest route from "+firstLocation.getLocationId()+" to "+secondLocation.getLocationId()+": "+safestRoute.getVertexList());
+            addSafestRoute(new SafestRoute(safestRoute.getVertexList()));
             }
             else {
                 System.out.println("No route from "+firstLocation.getLocationId()+" to "+secondLocation.getLocationId());
