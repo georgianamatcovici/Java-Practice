@@ -1,0 +1,27 @@
+package org.example;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Bag {
+    List<Tile> tiles=new ArrayList<>();
+    public Bag() {
+        for (char c = 'a'; c < 'z'; c++) {
+            int randomPoints=(int)(Math.random()*10);
+            tiles.add(new Tile(c, randomPoints));
+        }
+
+    }
+
+    public synchronized List<Tile> extractTiles(int howMany) {
+        List<Tile> extracted = new ArrayList<>();
+        for (int i = 0; i < howMany; i++) {
+            if (tiles.isEmpty()) {
+                break;
+            }
+            int randomIndex = (int)(Math.random()*tiles.size());
+            extracted.add(tiles.remove(randomIndex));
+        }
+        return extracted;
+    }
+}
