@@ -23,6 +23,7 @@ public class Player implements Runnable{
             Thread.sleep(500);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            running = false;
         }
 
         return true;
@@ -32,7 +33,7 @@ public class Player implements Runnable{
     public void run() {
         while (running) {
             if (!submitWord()) {
-                break;
+                running = false;
             }
         }
     }

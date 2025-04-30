@@ -7,8 +7,9 @@ public class Bag {
     List<Tile> tiles=new ArrayList<>();
     public Bag() {
         for (char c = 'a'; c < 'z'; c++) {
-            int randomPoints=(int)(Math.random()*10);
-            tiles.add(new Tile(c, randomPoints));
+            for(int i=1; i<10; i++) {
+                tiles.add(new Tile(c, i));
+            }
         }
 
     }
